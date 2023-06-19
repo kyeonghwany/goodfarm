@@ -3,6 +3,7 @@ library(readxl)
 library(dplyr)
 library(purrr)
 library(stringr)
+library(lubridate)
 
 # 농가 코드표 전처리
 
@@ -73,4 +74,15 @@ prd_request <- function(pageSize = 10, pageNo = 1, searchFrmhsCode = "SP201", re
   df$response$body$items$item %>% return()
 }
 
-tomato[1]
+ <- tomato %>% 
+  select(c(농가코드, 정식일)) %>% 
+  mutate(농가코드 = 농가코드 %>% as.character()) %>%
+  mutate(년 = year(정식일) %>% as.character()) %>%
+  mutate(월 = month(정식일) %>% as.character()) %>%
+  mutate(일 = day(정식일) %>% as.character()) %>%
+  mutate(시 = hour(정식일) %>% as.character()) %>%
+  mutate(월 = ifelse(str_length(월)==1, paste0("0", 월), 월)) %>%
+  mutate(일 = ifelse(str_length(일)==1, paste0("0", 일), 일)) %>%
+  mutate(시 = ifelse(str_length(시)==1, paste0("0", 시), 시)) %>%
+  mutate(정식일 = str_c(년, 월, 일, 시), .keep="unused")
+
