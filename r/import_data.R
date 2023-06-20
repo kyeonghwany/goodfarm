@@ -38,7 +38,7 @@ colnames(paprika) <- c("계절", "농가코드", "도", "시군", "온실유형"
 
 baseurl = "https://apis.data.go.kr/1390000/SmartFarmdata/"
 apiname = c("envdatarqst", "grwdatarqst", "prddatarqst")
-service_key = "?serviceKey=%2BF%2BxyvKnK3CK9Q%2B4lzy4%2Fa2Vq8hqFQx1DdJey1XBfDU20ZnX0R%2B%2FbniJ2cP8Es0FI49x6bEoobk5ev6oylt8BQ%3D%3D"
+service_key = readLines("data/service_key.txt")
 
 env_request <- function(pageSize = 10, pageNo = 1, searchFrmhsCode = "SP201", searchMeasDt = "2019040100", returnType = "json"){
   url = paste0(baseurl, apiname[1], service_key,
@@ -85,4 +85,3 @@ prd_request <- function(pageSize = 10, pageNo = 1, searchFrmhsCode = "SP201", re
   mutate(일 = ifelse(str_length(일)==1, paste0("0", 일), 일)) %>%
   mutate(시 = ifelse(str_length(시)==1, paste0("0", 시), 시)) %>%
   mutate(정식일 = str_c(년, 월, 일, 시), .keep="unused")
-
