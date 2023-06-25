@@ -5,6 +5,17 @@ library(purrr)
 library(stringr)
 library(lubridate)
 
+ymd_hms_to_chr <- function(date){
+  yy <- year(date) %>% as.character()
+  mm <- month(date) %>% as.character()
+  dd <- day(date) %>% as.character()
+  hh <- hour(date) %>% as.character()
+  mm <- ifelse(str_length(mm)==1, paste0("0", mm), mm)
+  dd <- ifelse(str_length(dd)==1, paste0("0", dd), dd)
+  hh <- ifelse(str_length(hh)==1, paste0("0", hh), hh)
+  paste0(yy,mm,dd,hh) %>% return()
+}
+
 # 농가 코드표 전처리
 
 sheet_index <- str_c("시트", 1:7)
@@ -52,6 +63,13 @@ env_request <- function(pageSize = 10, pageNo = 1, searchFrmhsCode = "SP201", se
   df$response$body$items$item %>% return()
 }
 
+env_request_full <- function(start, end, pageSize = 10, pageNo = 1, searchFrmhsCode = "SP201", returnType = "json"){
+  timpline <- seq.POSIXt(start, end, by="hour")
+  timeline_chr <- map_vec(timpline, ymd_hms_to_chr)
+  map(timeline_chr, ~env_request(pageSize, pageNo, searchFrmhsCode, searchMeasDt = ., returnType)) %>%
+    bind_rows() %>% return()
+}
+
 grw_request <- function(pageSize = 10, pageNo = 1, searchFrmhsCode = "SP201", returnType = "json"){
   url = paste0(baseurl, apiname[2], service_key,
                "&pageSize=", pageSize,
@@ -74,14 +92,24 @@ prd_request <- function(pageSize = 10, pageNo = 1, searchFrmhsCode = "SP201", re
   df$response$body$items$item %>% return()
 }
 
- <- tomato %>% 
-  select(c(농가코드, 정식일)) %>% 
+tomato_code_day <- tomato %>% 
+  select(c(농가코드, 정식일, 끝수확일)) %>% 
   mutate(농가코드 = 농가코드 %>% as.character()) %>%
-  mutate(년 = year(정식일) %>% as.character()) %>%
-  mutate(월 = month(정식일) %>% as.character()) %>%
-  mutate(일 = day(정식일) %>% as.character()) %>%
-  mutate(시 = hour(정식일) %>% as.character()) %>%
-  mutate(월 = ifelse(str_length(월)==1, paste0("0", 월), 월)) %>%
-  mutate(일 = ifelse(str_length(일)==1, paste0("0", 일), 일)) %>%
-  mutate(시 = ifelse(str_length(시)==1, paste0("0", 시), 시)) %>%
-  mutate(정식일 = str_c(년, 월, 일, 시), .keep="unused")
+  mutate(끝수확일 = if_else(is.na(끝수확일), 정식일+years(1), 끝수확일))
+
+tday <- seq.POSIXt(ymd_hms("19960601000000"), ymd_hms("19970601000000"), by="hour")
+tt <- map_vec(tday, ymd_hms_to_chr)
+tt %>% bind_cols()
+
+tomato_code_day[1,]$농가코드
+tomato_code_day[1,]$정식일
+
+env_request_full(tomato_code_day[1,]$정식일, ymd_hms("20170901000000"), searchFrmhsCode = tomato_code_day[1,]$농가코드, returnType = "json")
+
+test <- tomato_code_day[1:2,]
+test_db <- map2(
+  test$농가코드, 
+  test$정식일,
+  ~env_request(pageSize = 10, pageNo = 1, searchFrmhsCode = .x, searchMeasDt = ymd_hms_to_chr(.y), returnType = "json"))
+
+test_db %>% bind_rows()
