@@ -35,5 +35,8 @@ df_paprika <- map(file_list_paprika, ~read_excel(.x))
 df_strawberry <- map(file_list_strawberry, ~read_excel(.x))
 df_tomatoes <- map(file_list_tomatoes, ~read_excel(.x))
 
-df_tomatoes <- map(file_list_tomatoes, ~read_excel(.x))
-
+save(df_info, df_env,
+     df_cherry, df_chrysanthemum, df_cucumber,
+     df_kmelon, df_paprika, df_strawberry,
+     df_tomatoes,
+     file = "./data/smartfarm_data.rda")
